@@ -1,0 +1,5 @@
+# Lo script gradlew deve avere fine riga Unix, altrimenti ./gradlew non parte
+# su macOS/Linux se il repository è stato creato da Windows.
+gradlew     text eol=lf
+*.bat       text eol=crlf
+*.jar       binary

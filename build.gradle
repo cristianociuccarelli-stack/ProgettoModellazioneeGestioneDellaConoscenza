@@ -1,0 +1,48 @@
+plugins {
+    // Il plugin "application" aggiunge il comando ./gradlew run
+    id 'application'
+}
+
+group = 'it.unicam.cs.mpgc'
+version = '0.1.0'
+
+repositories {
+    // Le librerie (JavaFX, JUnit) vengono scaricate da qui
+    mavenCentral()
+}
+
+// JavaFX viene scaricato da Maven Central nella versione adatta al sistema
+// operativo di chi compila: così ./gradlew run funziona su Windows, macOS e
+// Linux senza installare JavaFX a mano.
+def javafxVersion = '21.0.5'
+def javafxModules = ['base', 'graphics', 'controls']
+def javafxPlatform = {
+    def os = System.getProperty('os.name').toLowerCase()
+    def arm = System.getProperty('os.arch') == 'aarch64'
+    if (os.contains('win')) return 'win'
+    if (os.contains('mac')) return arm ? 'mac-aarch64' : 'mac'
+    return arm ? 'linux-aarch64' : 'linux'
+}()
+
+dependencies {
+    javafxModules.each { module ->
+        implementation "org.openjfx:javafx-${module}:${javafxVersion}:${javafxPlatform}"
+    }
+
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+    options.encoding = 'UTF-8'
+}
+
+application {
+    mainClass = 'it.unicam.cs.mpgc.rpg195945.Main'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
