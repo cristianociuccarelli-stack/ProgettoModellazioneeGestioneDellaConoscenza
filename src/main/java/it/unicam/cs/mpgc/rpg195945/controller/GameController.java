@@ -1,6 +1,7 @@
 package it.unicam.cs.mpgc.rpg195945.controller;
 
 import it.unicam.cs.mpgc.rpg195945.model.student.Affinity;
+import it.unicam.cs.mpgc.rpg195945.model.student.Stats;
 import it.unicam.cs.mpgc.rpg195945.model.student.Student;
 
 import java.util.List;
@@ -23,6 +24,15 @@ public class GameController {
      */
     public List<Affinity> affinities() {
         return Affinity.all();
+    }
+
+    /**
+     * Anteprima delle statistiche di partenza, da mostrare mentre il giocatore
+     * sceglie l'affinità. Usa lo stesso calcolo di {@link Student#stats()},
+     * così l'anteprima non può mai essere diversa dalla realtà.
+     */
+    public Stats startingStats(Affinity affinity) {
+        return new Student("Anteprima", affinity).stats();
     }
 
     /**
