@@ -34,4 +34,21 @@ public record Stats(int health, int mana, int power, int defense, int speed) {
                 defense + other.defense,
                 speed + other.speed);
     }
+
+    /**
+     * @param factor quante volte ripetere queste statistiche (zero o più)
+     * @return nuove statistiche, ognuna moltiplicata per {@code factor}
+     * @throws IllegalArgumentException se {@code factor} è negativo
+     */
+    public Stats times(int factor) {
+        if (factor < 0) {
+            throw new IllegalArgumentException("Il fattore non può essere negativo");
+        }
+        return new Stats(
+                health * factor,
+                mana * factor,
+                power * factor,
+                defense * factor,
+                speed * factor);
+    }
 }

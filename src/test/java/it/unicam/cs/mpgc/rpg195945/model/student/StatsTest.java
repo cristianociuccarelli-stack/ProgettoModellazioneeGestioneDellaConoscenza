@@ -32,4 +32,20 @@ class StatsTest {
     void rejectsNegativeValues() {
         assertThrows(IllegalArgumentException.class, () -> new Stats(-1, 0, 0, 0, 0));
     }
+
+    @Test
+    void timesMultipliesEachStatistic() {
+        Stats growth = new Stats(8, 4, 3, 1, 1);
+        assertEquals(new Stats(24, 12, 9, 3, 3), growth.times(3));
+    }
+
+    @Test
+    void timesZeroGivesZero() {
+        assertEquals(Stats.ZERO, new Stats(8, 4, 3, 1, 1).times(0));
+    }
+
+    @Test
+    void timesRejectsNegativeFactor() {
+        assertThrows(IllegalArgumentException.class, () -> new Stats(8, 4, 3, 1, 1).times(-1));
+    }
 }
