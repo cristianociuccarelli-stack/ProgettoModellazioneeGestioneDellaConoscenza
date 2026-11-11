@@ -3,11 +3,8 @@ package it.unicam.cs.mpgc.rpg195945.view.javafx;
 import it.unicam.cs.mpgc.rpg195945.controller.GameController;
 import it.unicam.cs.mpgc.rpg195945.model.student.Student;
 import javafx.application.Application;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 /**
@@ -36,15 +33,10 @@ public class AcademyApp extends Application {
     }
 
     private void showNewStudent() {
-        scene.setRoot(new NewStudentView(controller, this::showWelcome).getRoot());
+        scene.setRoot(new NewStudentView(controller, this::showStudentSheet).getRoot());
     }
 
-    /** Provvisoria: nel prossimo pezzo diventerà la scheda dello studente. */
-    private void showWelcome(Student student) {
-        Label welcome = new Label("Benvenuto all'Accademia, " + student.name() + "!");
-        welcome.setStyle("-fx-font-size: 28px; -fx-font-weight: bold;");
-        VBox root = new VBox(12, welcome, new Label(student.toString()));
-        root.setAlignment(Pos.CENTER);
-        scene.setRoot(root);
+    private void showStudentSheet(Student student) {
+        scene.setRoot(new StudentSheetView(student).getRoot());
     }
 }
