@@ -1,9 +1,16 @@
 package it.unicam.cs.mpgc.rpg195945.model.student;
 
+import it.unicam.cs.mpgc.rpg195945.model.magic.Element;
+import it.unicam.cs.mpgc.rpg195945.model.magic.Rune;
+import it.unicam.cs.mpgc.rpg195945.model.magic.Spell;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StudentTest {
 
@@ -44,5 +51,24 @@ class StudentTest {
     @Test
     void rejectsMissingAffinity() {
         assertThrows(NullPointerException.class, () -> new Student("Lira", null));
+    }
+
+    @Test
+    void newStudentKnowsOnlyTheSpellsOfItsElement() {
+        Student student = new Student("Lira", Affinity.FIRE);
+        assertEquals(List.of(
+                new Spell(Element.FIRE, Rune.BOLT),
+                new Spell(Element.FIRE, Rune.WARD)), student.spells());
+        assertFalse(student.canCast(new Spell(Element.WATER, Rune.BOLT)));
+    }
+
+    @Test
+    void learningUnlocksNewSpells() {
+        Student student = new Student("Lira", Affinity.WATER);
+        assertTrue(student.learn(Rune.SPRING));
+        assertTrue(student.learn(Element.AIR));
+        // 2 elementi x 3 rune
+        assertEquals(6, student.spells().size());
+        assertTrue(student.canCast(new Spell(Element.AIR, Rune.SPRING)));
     }
 }

@@ -1,5 +1,6 @@
 package it.unicam.cs.mpgc.rpg195945.view.javafx;
 
+import it.unicam.cs.mpgc.rpg195945.model.magic.Spell;
 import it.unicam.cs.mpgc.rpg195945.model.student.Stats;
 import it.unicam.cs.mpgc.rpg195945.model.student.Student;
 import javafx.geometry.Insets;
@@ -13,7 +14,8 @@ import javafx.scene.layout.VBox;
 import java.util.Objects;
 
 /**
- * Scheda dello studente: nome, affinità, livello, esperienza e statistiche.
+ * Scheda dello studente: nome, affinità, livello, esperienza, statistiche e
+ * incantesimi conosciuti.
  * <p>
  * Mostra soltanto i dati: non modifica lo studente.
  */
@@ -37,7 +39,18 @@ public class StudentSheetView {
         Label experience = new Label(student.experience() + " / "
                 + student.experienceForNextLevel() + " esperienza");
 
-        root = new VBox(10, name, affinity, level, experienceBar, experience, statsTable(student.stats()));
+        Label spellsTitle = new Label("Incantesimi");
+        spellsTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        spellsTitle.setPadding(new Insets(16, 0, 0, 0));
+        VBox spells = new VBox(4);
+        spells.setAlignment(Pos.CENTER);
+        for (Spell spell : student.spells()) {
+            spells.getChildren().add(new Label(spell.name() + "  ·  " + spell.effect()
+                    + " " + spell.power() + "  ·  " + spell.manaCost() + " mana"));
+        }
+
+        root = new VBox(10, name, affinity, level, experienceBar, experience,
+                statsTable(student.stats()), spellsTitle, spells);
         root.setAlignment(Pos.CENTER);
         root.setPadding(new Insets(40));
     }
