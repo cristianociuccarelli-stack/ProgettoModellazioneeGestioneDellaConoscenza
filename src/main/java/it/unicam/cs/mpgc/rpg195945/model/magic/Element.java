@@ -1,4 +1,4 @@
-package it.unicam.cs.mpgc.rpg195945.model.student;
+package it.unicam.cs.mpgc.rpg195945.model.magic;
 
 /**
  * I quattro elementi da cui nasce la magia dell'Accademia.

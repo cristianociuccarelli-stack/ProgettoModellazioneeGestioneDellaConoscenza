@@ -1,7 +1,5 @@
 package it.unicam.cs.mpgc.rpg195945.model.magic;
 
-import it.unicam.cs.mpgc.rpg195945.model.student.Element;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;

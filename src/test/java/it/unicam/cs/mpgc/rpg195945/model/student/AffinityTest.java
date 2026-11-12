@@ -1,5 +1,6 @@
 package it.unicam.cs.mpgc.rpg195945.model.student;
 
+import it.unicam.cs.mpgc.rpg195945.model.magic.Element;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;

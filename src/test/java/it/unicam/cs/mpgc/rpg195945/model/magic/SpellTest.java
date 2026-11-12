@@ -1,6 +1,5 @@
 package it.unicam.cs.mpgc.rpg195945.model.magic;
 
-import it.unicam.cs.mpgc.rpg195945.model.student.Element;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
