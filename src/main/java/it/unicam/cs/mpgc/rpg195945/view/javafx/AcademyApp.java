@@ -1,7 +1,7 @@
 package it.unicam.cs.mpgc.rpg195945.view.javafx;
 
 import it.unicam.cs.mpgc.rpg195945.controller.GameController;
-import it.unicam.cs.mpgc.rpg195945.model.student.Student;
+import it.unicam.cs.mpgc.rpg195945.model.opponent.Opponent;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
@@ -33,10 +33,17 @@ public class AcademyApp extends Application {
     }
 
     private void showNewStudent() {
-        scene.setRoot(new NewStudentView(controller, this::showStudentSheet).getRoot());
+        scene.setRoot(new NewStudentView(controller, student -> showStudentSheet()).getRoot());
     }
 
-    private void showStudentSheet(Student student) {
-        scene.setRoot(new StudentSheetView(student).getRoot());
+    private void showStudentSheet() {
+        StudentSheetView sheet = new StudentSheetView(
+                controller.student().orElseThrow(), controller.opponents(), this::showDuel);
+        scene.setRoot(sheet.getRoot());
+    }
+
+    private void showDuel(Opponent opponent) {
+        controller.startDuel(opponent);
+        scene.setRoot(new DuelView(controller, this::showStudentSheet).getRoot());
     }
 }
