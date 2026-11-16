@@ -71,4 +71,13 @@ class StudentTest {
         assertEquals(6, student.spells().size());
         assertTrue(student.canCast(new Spell(Element.AIR, Rune.SPRING)));
     }
+
+    @Test
+    void knowsTheElementOfItsAffinityAndTheStartingRunes() {
+        Student student = new Student("Lira", Affinity.EARTH);
+        assertTrue(student.knows(Element.EARTH));
+        assertFalse(student.knows(Element.AIR));
+        assertTrue(student.knows(Rune.BOLT));
+        assertFalse(student.knows(Rune.LANCE));
+    }
 }

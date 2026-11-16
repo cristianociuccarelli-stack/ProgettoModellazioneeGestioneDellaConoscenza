@@ -99,6 +99,14 @@ public final class Student {
         return spellbook.canCast(spell);
     }
 
+    public boolean knows(Rune rune) {
+        return spellbook.knows(rune);
+    }
+
+    public boolean knows(Element element) {
+        return spellbook.knows(element);
+    }
+
     /**
      * @return {@code true} se la runa è nuova
      */
