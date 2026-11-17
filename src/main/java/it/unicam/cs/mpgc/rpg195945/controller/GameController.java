@@ -1,9 +1,14 @@
 package it.unicam.cs.mpgc.rpg195945.controller;
 
+import it.unicam.cs.mpgc.rpg195945.engine.activity.Activity;
+import it.unicam.cs.mpgc.rpg195945.engine.activity.ElementLesson;
+import it.unicam.cs.mpgc.rpg195945.engine.activity.RuneLesson;
+import it.unicam.cs.mpgc.rpg195945.engine.activity.Training;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.Combatant;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.Duel;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.ElementWheel;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.ElementalRule;
+import it.unicam.cs.mpgc.rpg195945.model.calendar.AcademicYear;
 import it.unicam.cs.mpgc.rpg195945.model.opponent.Opponent;
 import it.unicam.cs.mpgc.rpg195945.model.student.Affinity;
 import it.unicam.cs.mpgc.rpg195945.model.student.Stats;
@@ -23,7 +28,9 @@ import java.util.Optional;
 public class GameController {
 
     private final ElementalRule elementalRule;
+    private final List<Activity> activities = List.of(new Training(), new RuneLesson(), new ElementLesson());
     private Student student;
+    private AcademicYear year;
     private Duel duel;
     private Opponent opponent;
 
@@ -56,13 +63,14 @@ public class GameController {
     }
 
     /**
-     * Crea lo studente con cui si gioca.
+     * Crea lo studente con cui si gioca e fa iniziare l'anno accademico.
      *
      * @throws IllegalArgumentException se il nome è vuoto
      */
     public Student createStudent(String name, Affinity affinity) {
         Objects.requireNonNull(affinity, "Scegli un'affinità");
         student = new Student(name, affinity);
+        year = new AcademicYear();
         return student;
     }
 
@@ -83,17 +91,12 @@ public class GameController {
     /**
      * Inizia un duello tra lo studente e l'avversario scelto.
      *
-     * @throws IllegalStateException se lo studente non è ancora stato creato
-     *                               o c'è già un duello in corso
+     * @throws IllegalStateException se non si può iniziare una nuova attività
+     *                               (vedi {@link #requireFreeWeek()})
      */
     public Duel startDuel(Opponent chosen) {
         Objects.requireNonNull(chosen, "opponent");
-        if (student == null) {
-            throw new IllegalStateException("Prima devi creare lo studente");
-        }
-        if (duel != null) {
-            throw new IllegalStateException("C'è già un duello in corso");
-        }
+        requireFreeWeek();
         opponent = chosen;
         duel = new Duel(Combatant.of(student), Combatant.of(chosen), elementalRule);
         return duel;
@@ -108,7 +111,8 @@ public class GameController {
 
     /**
      * Chiude il duello finito: se lo studente ha vinto riceve l'esperienza
-     * dell'avversario.
+     * dell'avversario. Il duello occupa la settimana, quindi si passa alla
+     * successiva.
      *
      * @return l'esperienza guadagnata (0 in caso di sconfitta)
      * @throws IllegalStateException se non c'è un duello o non è ancora finito
@@ -121,6 +125,68 @@ public class GameController {
         student.gainExperience(reward);
         duel = null;
         opponent = null;
+        year.advance();
         return reward;
+    }
+
+    /**
+     * @return le attività che si possono svolgere durante una settimana
+     */
+    public List<Activity> activities() {
+        return activities;
+    }
+
+    /**
+     * Svolge un'attività: occupa tutta la settimana, quindi poi si passa alla
+     * successiva.
+     *
+     * @return la frase che racconta cosa è successo
+     * @throws IllegalArgumentException se lo studente non può svolgerla adesso
+     * @throws IllegalStateException    se non si può iniziare una nuova attività
+     */
+    public String doActivity(Activity activity) {
+        Objects.requireNonNull(activity, "activity");
+        requireFreeWeek();
+        if (!activity.isAvailableFor(student)) {
+            throw new IllegalArgumentException(activity.name() + " non è disponibile");
+        }
+        String message = activity.perform(student);
+        year.advance();
+        return message;
+    }
+
+    /** @return la settimana corrente */
+    public int week() {
+        return requireYear().week();
+    }
+
+    /** @return le settimane di scuola che restano, compresa quella corrente */
+    public int weeksLeft() {
+        return requireYear().weeksLeft();
+    }
+
+    /** @return {@code true} quando è il momento della Prova dell'Equinozio */
+    public boolean isYearOver() {
+        return requireYear().isOver();
+    }
+
+    private AcademicYear requireYear() {
+        if (year == null) {
+            throw new IllegalStateException("Prima devi creare lo studente");
+        }
+        return year;
+    }
+
+    /**
+     * Controlla che si possa iniziare qualcosa di nuovo questa settimana: lo
+     * studente esiste, l'anno non è finito e non c'è un duello in corso.
+     */
+    private void requireFreeWeek() {
+        if (requireYear().isOver()) {
+            throw new IllegalStateException("Le settimane di scuola sono finite");
+        }
+        if (duel != null) {
+            throw new IllegalStateException("C'è già un duello in corso");
+        }
     }
 }

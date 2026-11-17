@@ -33,17 +33,15 @@ public class AcademyApp extends Application {
     }
 
     private void showNewStudent() {
-        scene.setRoot(new NewStudentView(controller, student -> showStudentSheet()).getRoot());
+        scene.setRoot(new NewStudentView(controller, student -> showHome()).getRoot());
     }
 
-    private void showStudentSheet() {
-        StudentSheetView sheet = new StudentSheetView(
-                controller.student().orElseThrow(), controller.opponents(), this::showDuel);
-        scene.setRoot(sheet.getRoot());
+    private void showHome() {
+        scene.setRoot(new HomeView(controller, this::showDuel).getRoot());
     }
 
     private void showDuel(Opponent opponent) {
         controller.startDuel(opponent);
-        scene.setRoot(new DuelView(controller, this::showStudentSheet).getRoot());
+        scene.setRoot(new DuelView(controller, this::showHome).getRoot());
     }
 }

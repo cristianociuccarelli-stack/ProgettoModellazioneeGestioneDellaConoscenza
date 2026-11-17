@@ -1,7 +1,11 @@
 package it.unicam.cs.mpgc.rpg195945.controller;
 
+import it.unicam.cs.mpgc.rpg195945.engine.activity.RuneLesson;
+import it.unicam.cs.mpgc.rpg195945.engine.activity.Training;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.Duel;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.ElementalRule;
+import it.unicam.cs.mpgc.rpg195945.model.calendar.AcademicYear;
+import it.unicam.cs.mpgc.rpg195945.model.magic.Rune;
 import it.unicam.cs.mpgc.rpg195945.model.opponent.Opponent;
 import it.unicam.cs.mpgc.rpg195945.model.student.Affinity;
 import it.unicam.cs.mpgc.rpg195945.model.student.Stats;
@@ -100,5 +104,58 @@ class GameControllerTest {
         }
         assertEquals(0, controller.finishDuel());
         assertEquals(0, student.experience());
+    }
+
+    @Test
+    void theYearStartsWhenTheStudentIsCreated() {
+        GameController controller = new GameController();
+        assertThrows(IllegalStateException.class, controller::week);
+        controller.createStudent("Lira", Affinity.FIRE);
+        assertEquals(1, controller.week());
+        assertEquals(AcademicYear.TOTAL_WEEKS, controller.weeksLeft());
+    }
+
+    @Test
+    void anActivityChangesTheStudentAndTakesTheWholeWeek() {
+        GameController controller = new GameController();
+        Student student = controller.createStudent("Lira", Affinity.FIRE);
+        controller.doActivity(new RuneLesson());
+        assertTrue(student.knows(Rune.LANCE));
+        assertEquals(2, controller.week());
+    }
+
+    @Test
+    void anUnavailableActivityIsRejectedAndTheWeekDoesNotPass() {
+        GameController controller = new GameController();
+        controller.createStudent("Lira", Affinity.FIRE);
+        controller.doActivity(new RuneLesson());
+        controller.doActivity(new RuneLesson());
+        assertThrows(IllegalArgumentException.class, () -> controller.doActivity(new RuneLesson()));
+        assertEquals(3, controller.week());
+    }
+
+    @Test
+    void aDuelTakesTheWholeWeek() {
+        GameController controller = new GameController();
+        controller.createStudent("Lira", Affinity.EARTH);
+        Duel duel = controller.startDuel(Opponent.STORM_HAWK);
+        assertThrows(IllegalStateException.class, () -> controller.doActivity(new Training()));
+        while (!duel.isOver()) {
+            duel.concentrate();
+        }
+        controller.finishDuel();
+        assertEquals(2, controller.week());
+    }
+
+    @Test
+    void nothingCanBeDoneWhenTheYearIsOver() {
+        GameController controller = new GameController();
+        controller.createStudent("Lira", Affinity.FIRE);
+        for (int i = 0; i < AcademicYear.TOTAL_WEEKS; i++) {
+            controller.doActivity(new Training());
+        }
+        assertTrue(controller.isYearOver());
+        assertThrows(IllegalStateException.class, () -> controller.doActivity(new Training()));
+        assertThrows(IllegalStateException.class, () -> controller.startDuel(Opponent.EMBER_GOLEM));
     }
 }
