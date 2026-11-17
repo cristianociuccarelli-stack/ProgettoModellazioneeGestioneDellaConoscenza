@@ -128,11 +128,17 @@ public class DuelView {
 
         boolean won = duel.studentWon();
         int reward = controller.finishDuel();
-        Label result = new Label(won
-                ? "Vittoria! Hai guadagnato " + reward + " punti esperienza."
-                : "Sconfitta... Allenati e riprova.");
+        String text;
+        if (!won) {
+            text = "Sconfitta... Allenati e riprova.";
+        } else if (reward > 0) {
+            text = "Vittoria! Hai guadagnato " + reward + " punti esperienza.";
+        } else {
+            text = "Vittoria!";
+        }
+        Label result = new Label(text);
         result.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        Button back = new Button("Torna alla scheda");
+        Button back = new Button("Continua");
         back.setOnAction(e -> onClose.run());
         bottom.getChildren().addAll(result, back);
     }

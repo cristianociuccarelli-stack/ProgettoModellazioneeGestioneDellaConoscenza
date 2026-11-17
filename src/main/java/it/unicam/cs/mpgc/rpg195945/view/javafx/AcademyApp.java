@@ -21,10 +21,12 @@ public class AcademyApp extends Application {
     private static final double HEIGHT = 700;
 
     private final GameController controller = new GameController();
+    private Stage stage;
     private Scene scene;
 
     @Override
-    public void start(Stage stage) {
+    public void start(Stage primaryStage) {
+        stage = primaryStage;
         scene = new Scene(new StackPane(), WIDTH, HEIGHT);
         showNewStudent();
         stage.setTitle(TITLE);
@@ -37,11 +39,20 @@ public class AcademyApp extends Application {
     }
 
     private void showHome() {
-        scene.setRoot(new HomeView(controller, this::showDuel).getRoot());
+        scene.setRoot(new HomeView(controller, this::showDuel, this::showTrial).getRoot());
     }
 
     private void showDuel(Opponent opponent) {
         controller.startDuel(opponent);
         scene.setRoot(new DuelView(controller, this::showHome).getRoot());
+    }
+
+    private void showTrial() {
+        controller.startTrial();
+        scene.setRoot(new DuelView(controller, this::showEnd).getRoot());
+    }
+
+    private void showEnd() {
+        scene.setRoot(new EndView(controller, this::showNewStudent, stage::close).getRoot());
     }
 }

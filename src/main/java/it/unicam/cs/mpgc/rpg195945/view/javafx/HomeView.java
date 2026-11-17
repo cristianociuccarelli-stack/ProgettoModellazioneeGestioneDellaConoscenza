@@ -30,16 +30,19 @@ public class HomeView {
 
     private final GameController controller;
     private final Consumer<Opponent> onChallenge;
+    private final Runnable onTrial;
     private final BorderPane root = new BorderPane();
     private String lastMessage = "";
 
     /**
      * @param controller  il controller, con lo studente già creato
      * @param onChallenge azione da eseguire quando si sfida un avversario
+     * @param onTrial     azione da eseguire quando si affronta la Prova dell'Equinozio
      */
-    public HomeView(GameController controller, Consumer<Opponent> onChallenge) {
+    public HomeView(GameController controller, Consumer<Opponent> onChallenge, Runnable onTrial) {
         this.controller = Objects.requireNonNull(controller, "controller");
         this.onChallenge = Objects.requireNonNull(onChallenge, "onChallenge");
+        this.onTrial = Objects.requireNonNull(onTrial, "onTrial");
         refresh();
     }
 
@@ -71,7 +74,17 @@ public class HomeView {
             Label text = new Label("Le settimane di scuola sono finite: "
                     + "è il momento della Prova dell'Equinozio!");
             text.setWrapText(true);
-            panel.getChildren().addAll(title, text, messageLabel());
+            Opponent guardian = controller.trialGuardian();
+            Label guardianText = new Label(guardian.name() + " (" + guardian.element() + ")\n"
+                    + guardian.description());
+            guardianText.setWrapText(true);
+            guardianText.setStyle("-fx-text-fill: #555;");
+            Button trial = new Button("Affronta la Prova dell'Equinozio");
+            trial.setMaxWidth(Double.MAX_VALUE);
+            trial.setStyle("-fx-font-weight: bold;");
+            trial.setOnAction(e -> onTrial.run());
+            panel.getChildren().addAll(title, text, messageLabel(),
+                    subtitle("Il tuo avversario"), guardianText, trial);
             return panel;
         }
 

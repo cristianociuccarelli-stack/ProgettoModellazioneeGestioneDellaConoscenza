@@ -8,6 +8,7 @@ import it.unicam.cs.mpgc.rpg195945.engine.duel.Combatant;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.Duel;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.ElementWheel;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.ElementalRule;
+import it.unicam.cs.mpgc.rpg195945.engine.trial.EquinoxTrial;
 import it.unicam.cs.mpgc.rpg195945.model.calendar.AcademicYear;
 import it.unicam.cs.mpgc.rpg195945.model.opponent.Opponent;
 import it.unicam.cs.mpgc.rpg195945.model.student.Affinity;
@@ -33,6 +34,9 @@ public class GameController {
     private AcademicYear year;
     private Duel duel;
     private Opponent opponent;
+    private boolean inTrial;
+    private boolean trialTaken;
+    private boolean trialPassed;
 
     /** Controller con le regole standard del gioco. */
     public GameController() {
@@ -64,6 +68,7 @@ public class GameController {
 
     /**
      * Crea lo studente con cui si gioca e fa iniziare l'anno accademico.
+     * Se c'era una partita precedente, ricomincia da capo.
      *
      * @throws IllegalArgumentException se il nome è vuoto
      */
@@ -71,6 +76,11 @@ public class GameController {
         Objects.requireNonNull(affinity, "Scegli un'affinità");
         student = new Student(name, affinity);
         year = new AcademicYear();
+        duel = null;
+        opponent = null;
+        inTrial = false;
+        trialTaken = false;
+        trialPassed = false;
         return student;
     }
 
@@ -111,8 +121,9 @@ public class GameController {
 
     /**
      * Chiude il duello finito: se lo studente ha vinto riceve l'esperienza
-     * dell'avversario. Il duello occupa la settimana, quindi si passa alla
-     * successiva.
+     * dell'avversario. Un duello normale occupa la settimana, quindi si passa
+     * alla successiva; se invece era la Prova dell'Equinozio, se ne registra
+     * l'esito.
      *
      * @return l'esperienza guadagnata (0 in caso di sconfitta)
      * @throws IllegalStateException se non c'è un duello o non è ancora finito
@@ -123,9 +134,15 @@ public class GameController {
         }
         int reward = duel.studentWon() ? opponent.experienceReward() : 0;
         student.gainExperience(reward);
+        if (inTrial) {
+            trialTaken = true;
+            trialPassed = duel.studentWon();
+            inTrial = false;
+        } else {
+            year.advance();
+        }
         duel = null;
         opponent = null;
-        year.advance();
         return reward;
     }
 
@@ -168,6 +185,44 @@ public class GameController {
     /** @return {@code true} quando è il momento della Prova dell'Equinozio */
     public boolean isYearOver() {
         return requireYear().isOver();
+    }
+
+    /**
+     * @return il Guardiano che lo studente affronterà nella Prova dell'Equinozio
+     */
+    public Opponent trialGuardian() {
+        requireYear();
+        return EquinoxTrial.guardianFor(student, elementalRule);
+    }
+
+    /**
+     * Inizia la Prova dell'Equinozio, il duello finale dell'anno.
+     *
+     * @throws IllegalStateException se le settimane di scuola non sono ancora
+     *                               finite, la Prova è già stata affrontata o
+     *                               c'è un duello in corso
+     */
+    public Duel startTrial() {
+        if (!requireYear().isOver()) {
+            throw new IllegalStateException("La Prova si affronta alla fine dell'anno");
+        }
+        if (trialTaken || duel != null) {
+            throw new IllegalStateException("La Prova è già stata affrontata o è in corso");
+        }
+        opponent = trialGuardian();
+        duel = new Duel(Combatant.of(student), Combatant.of(opponent), elementalRule);
+        inTrial = true;
+        return duel;
+    }
+
+    /** @return {@code true} se la Prova dell'Equinozio è stata affrontata */
+    public boolean isTrialTaken() {
+        return trialTaken;
+    }
+
+    /** @return {@code true} se lo studente ha superato la Prova dell'Equinozio */
+    public boolean isTrialPassed() {
+        return trialPassed;
     }
 
     private AcademicYear requireYear() {
