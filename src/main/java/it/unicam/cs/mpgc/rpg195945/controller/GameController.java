@@ -35,8 +35,8 @@ public class GameController {
     private Duel duel;
     private Opponent opponent;
     private boolean inTrial;
-    private boolean trialTaken;
-    private boolean trialPassed;
+    private boolean completed;
+    private int failedTrials;
 
     /** Controller con le regole standard del gioco. */
     public GameController() {
@@ -67,7 +67,7 @@ public class GameController {
     }
 
     /**
-     * Crea lo studente con cui si gioca e fa iniziare l'anno accademico.
+     * Crea lo studente con cui si gioca e lo iscrive al primo anno.
      * Se c'era una partita precedente, ricomincia da capo.
      *
      * @throws IllegalArgumentException se il nome è vuoto
@@ -79,8 +79,8 @@ public class GameController {
         duel = null;
         opponent = null;
         inTrial = false;
-        trialTaken = false;
-        trialPassed = false;
+        completed = false;
+        failedTrials = 0;
         return student;
     }
 
@@ -122,8 +122,9 @@ public class GameController {
     /**
      * Chiude il duello finito: se lo studente ha vinto riceve l'esperienza
      * dell'avversario. Un duello normale occupa la settimana, quindi si passa
-     * alla successiva; se invece era la Prova dell'Equinozio, se ne registra
-     * l'esito.
+     * alla successiva. Se invece era la Prova dell'Equinozio: vincendo si passa
+     * all'anno dopo (o, dopo l'ultimo guardiano, ci si diploma), perdendo si
+     * ripete lo stesso anno.
      *
      * @return l'esperienza guadagnata (0 in caso di sconfitta)
      * @throws IllegalStateException se non c'è un duello o non è ancora finito
@@ -135,9 +136,7 @@ public class GameController {
         int reward = duel.studentWon() ? opponent.experienceReward() : 0;
         student.gainExperience(reward);
         if (inTrial) {
-            trialTaken = true;
-            trialPassed = duel.studentWon();
-            inTrial = false;
+            finishTrial(duel.studentWon());
         } else {
             year.advance();
         }
@@ -172,6 +171,11 @@ public class GameController {
         return message;
     }
 
+    /** @return l'anno corrente, da 1 a {@link AcademicYear#LAST_YEAR} */
+    public int year() {
+        return requireYear().year();
+    }
+
     /** @return la settimana corrente */
     public int week() {
         return requireYear().week();
@@ -188,26 +192,25 @@ public class GameController {
     }
 
     /**
-     * @return il Guardiano che lo studente affronterà nella Prova dell'Equinozio
+     * @return il guardiano che lo studente affronterà alla fine di quest'anno
      */
     public Opponent trialGuardian() {
-        requireYear();
-        return EquinoxTrial.guardianFor(student, elementalRule);
+        return EquinoxTrial.guardianOfYear(requireYear().year(), student, elementalRule);
     }
 
     /**
-     * Inizia la Prova dell'Equinozio, il duello finale dell'anno.
+     * Inizia la Prova dell'Equinozio contro il guardiano dell'anno.
      *
      * @throws IllegalStateException se le settimane di scuola non sono ancora
-     *                               finite, la Prova è già stata affrontata o
-     *                               c'è un duello in corso
+     *                               finite, il percorso è già concluso o c'è
+     *                               un duello in corso
      */
     public Duel startTrial() {
         if (!requireYear().isOver()) {
             throw new IllegalStateException("La Prova si affronta alla fine dell'anno");
         }
-        if (trialTaken || duel != null) {
-            throw new IllegalStateException("La Prova è già stata affrontata o è in corso");
+        if (completed || duel != null) {
+            throw new IllegalStateException("Il percorso è concluso o c'è già un duello in corso");
         }
         opponent = trialGuardian();
         duel = new Duel(Combatant.of(student), Combatant.of(opponent), elementalRule);
@@ -215,14 +218,27 @@ public class GameController {
         return duel;
     }
 
-    /** @return {@code true} se la Prova dell'Equinozio è stata affrontata */
-    public boolean isTrialTaken() {
-        return trialTaken;
+    /** @return {@code true} se lo studente ha battuto tutti i guardiani e si è diplomato */
+    public boolean isCompleted() {
+        return completed;
     }
 
-    /** @return {@code true} se lo studente ha superato la Prova dell'Equinozio */
-    public boolean isTrialPassed() {
-        return trialPassed;
+    /** @return quante Prove dell'Equinozio lo studente ha fallito */
+    public int failedTrials() {
+        return failedTrials;
+    }
+
+    /** Applica l'esito della Prova: anno successivo, diploma o anno da ripetere. */
+    private void finishTrial(boolean passed) {
+        inTrial = false;
+        if (!passed) {
+            failedTrials++;
+            year.repeatYear();
+        } else if (year.isLastYear()) {
+            completed = true;
+        } else {
+            year.nextYear();
+        }
     }
 
     private AcademicYear requireYear() {

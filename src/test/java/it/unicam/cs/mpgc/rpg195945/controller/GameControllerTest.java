@@ -6,6 +6,7 @@ import it.unicam.cs.mpgc.rpg195945.engine.duel.Duel;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.ElementWheel;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.ElementalRule;
 import it.unicam.cs.mpgc.rpg195945.model.calendar.AcademicYear;
+import it.unicam.cs.mpgc.rpg195945.model.magic.Element;
 import it.unicam.cs.mpgc.rpg195945.model.magic.Rune;
 import it.unicam.cs.mpgc.rpg195945.model.opponent.Opponent;
 import it.unicam.cs.mpgc.rpg195945.model.student.Affinity;
@@ -153,22 +154,42 @@ class GameControllerTest {
     void nothingCanBeDoneWhenTheYearIsOver() {
         GameController controller = new GameController();
         controller.createStudent("Lira", Affinity.FIRE);
-        for (int i = 0; i < AcademicYear.TOTAL_WEEKS; i++) {
-            controller.doActivity(new Training());
-        }
+        trainUntilTheTrial(controller);
         assertTrue(controller.isYearOver());
         assertThrows(IllegalStateException.class, () -> controller.doActivity(new Training()));
         assertThrows(IllegalStateException.class, () -> controller.startDuel(Opponent.EMBER_GOLEM));
     }
 
-    /** Un controller con lo studente creato e tutte le settimane passate ad allenarsi. */
+    /** Regola che rende devastanti gli incantesimi d'Acqua: lo studente (Idromante) vince al primo colpo. */
+    private static final ElementalRule WATER_IS_DEVASTATING =
+            (attack, target) -> attack == Element.WATER ? 100.0 : 1.0;
+
+    /** Un controller con lo studente creato e le settimane del primo anno passate ad allenarsi. */
     private static GameController controllerAtTheEndOfTheYear(ElementalRule rule) {
         GameController controller = new GameController(rule);
         controller.createStudent("Lira", Affinity.WATER);
-        for (int i = 0; i < AcademicYear.TOTAL_WEEKS; i++) {
+        trainUntilTheTrial(controller);
+        return controller;
+    }
+
+    private static void trainUntilTheTrial(GameController controller) {
+        while (!controller.isYearOver()) {
             controller.doActivity(new Training());
         }
-        return controller;
+    }
+
+    /** Gioca la Prova: con {@code attack} lo studente attacca, altrimenti si concentra soltanto. */
+    private static void playTrial(GameController controller, boolean attack) {
+        Duel trial = controller.startTrial();
+        Student student = controller.student().orElseThrow();
+        while (!trial.isOver()) {
+            if (attack) {
+                trial.cast(student.spells().get(0));
+            } else {
+                trial.concentrate();
+            }
+        }
+        controller.finishDuel();
     }
 
     @Test
@@ -179,34 +200,54 @@ class GameControllerTest {
     }
 
     @Test
-    void winningTheTrialPassesTheYear() {
-        GameController controller = controllerAtTheEndOfTheYear((attack, target) -> 100.0);
-        Duel trial = controller.startTrial();
-        assertEquals("Guardiano dell'Equinozio", trial.opponent().name());
-        trial.cast(controller.student().orElseThrow().spells().get(0));
-        controller.finishDuel();
-        assertTrue(controller.isTrialTaken());
-        assertTrue(controller.isTrialPassed());
-        assertThrows(IllegalStateException.class, controller::startTrial);
+    void eachYearHasItsOwnGuardian() {
+        GameController controller = controllerAtTheEndOfTheYear(ElementWheel.standard());
+        assertEquals("Guardiano della Soglia", controller.trialGuardian().name());
     }
 
     @Test
-    void losingTheTrialFailsTheYear() {
+    void winningTheTrialStartsTheNextYearWithTheSameStudent() {
+        GameController controller = controllerAtTheEndOfTheYear(WATER_IS_DEVASTATING);
+        Student student = controller.student().orElseThrow();
+        playTrial(controller, true);
+        assertEquals(2, controller.year());
+        assertEquals(1, controller.week());
+        assertEquals(student, controller.student().orElseThrow());
+        assertEquals("Guardiana delle Maree", controller.trialGuardian().name());
+    }
+
+    @Test
+    void losingTheTrialRepeatsTheYearAndKeepsTheProgress() {
         GameController controller = controllerAtTheEndOfTheYear(ElementWheel.standard());
-        Duel trial = controller.startTrial();
-        while (!trial.isOver()) {
-            trial.concentrate();
+        int level = controller.student().orElseThrow().level();
+        playTrial(controller, false);
+        assertEquals(1, controller.year());
+        assertEquals(1, controller.week());
+        assertEquals(1, controller.failedTrials());
+        assertEquals(level, controller.student().orElseThrow().level());
+    }
+
+    @Test
+    void beatingAllTheGuardiansCompletesTheGame() {
+        GameController controller = new GameController(WATER_IS_DEVASTATING);
+        controller.createStudent("Lira", Affinity.WATER);
+        for (int year = 1; year <= AcademicYear.LAST_YEAR; year++) {
+            trainUntilTheTrial(controller);
+            playTrial(controller, true);
         }
-        controller.finishDuel();
-        assertTrue(controller.isTrialTaken());
-        assertFalse(controller.isTrialPassed());
+        assertTrue(controller.isCompleted());
+        assertEquals(AcademicYear.LAST_YEAR, controller.year());
+        assertThrows(IllegalStateException.class, controller::startTrial);
     }
 
     @Test
     void aNewStudentStartsANewGame() {
         GameController controller = controllerAtTheEndOfTheYear(ElementWheel.standard());
+        playTrial(controller, false);
         controller.createStudent("Nuovo", Affinity.FIRE);
+        assertEquals(1, controller.year());
         assertEquals(1, controller.week());
-        assertFalse(controller.isTrialTaken());
+        assertEquals(0, controller.failedTrials());
+        assertFalse(controller.isCompleted());
     }
 }

@@ -1,6 +1,7 @@
 package it.unicam.cs.mpgc.rpg195945.view.javafx;
 
 import it.unicam.cs.mpgc.rpg195945.controller.GameController;
+import it.unicam.cs.mpgc.rpg195945.model.calendar.AcademicYear;
 import it.unicam.cs.mpgc.rpg195945.model.student.Student;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,15 +14,15 @@ import javafx.scene.layout.VBox;
 import java.util.Objects;
 
 /**
- * Schermata di fine anno: dice se lo studente ha superato la Prova
- * dell'Equinozio e riassume com'è cresciuto durante l'anno.
+ * Schermata finale: lo studente ha battuto tutti i guardiani e si è
+ * diplomato. Riassume com'è cresciuto durante il percorso.
  */
 public class EndView {
 
     private final VBox root;
 
     /**
-     * @param controller il controller, con la Prova già affrontata
+     * @param controller il controller, con il percorso concluso
      * @param onNewGame  azione per iniziare una nuova partita
      * @param onExit     azione per uscire dal gioco
      */
@@ -31,17 +32,19 @@ public class EndView {
         Objects.requireNonNull(onExit, "onExit");
         Student student = controller.student().orElseThrow();
 
-        Label title = new Label(controller.isTrialPassed()
-                ? "Prova dell'Equinozio superata!"
-                : "Prova dell'Equinozio fallita");
+        Label title = new Label("Ti sei diplomato all'Accademia Arcana!");
         title.setStyle("-fx-font-size: 32px; -fx-font-weight: bold;");
-        Label text = new Label(controller.isTrialPassed()
-                ? "Hai sconfitto il Guardiano: il tuo primo anno all'Accademia Arcana è concluso con successo."
-                : "Il Guardiano era troppo forte. L'anno prossimo andrà meglio!");
+        Label text = new Label("Hai sconfitto tutti e " + AcademicYear.LAST_YEAR
+                + " i guardiani delle Prove dell'Equinozio. Il tuo percorso è concluso.");
         text.setWrapText(true);
         text.setMaxWidth(560);
         Label summary = new Label(student.name() + ", " + student.affinity().title()
-                + " di livello " + student.level() + ", con " + student.spells().size() + " incantesimi.");
+                + " di livello " + student.level() + ", con " + student.spells().size() + " incantesimi"
+                + (controller.failedTrials() == 0
+                        ? ", senza mai fallire una Prova."
+                        : ". Prove fallite lungo il percorso: " + controller.failedTrials() + "."));
+        summary.setWrapText(true);
+        summary.setMaxWidth(560);
         summary.setStyle("-fx-text-fill: #555;");
 
         Button newGame = new Button("Nuova partita");

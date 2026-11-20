@@ -69,32 +69,29 @@ public class HomeView {
         panel.setPrefWidth(PANEL_WIDTH);
         panel.setAlignment(Pos.TOP_CENTER);
 
+        Label yearTitle = title("Anno " + controller.year() + " di " + AcademicYear.LAST_YEAR);
+        panel.getChildren().addAll(yearTitle, guardianBox());
+
         if (controller.isYearOver()) {
-            Label title = title("Fine delle lezioni");
             Label text = new Label("Le settimane di scuola sono finite: "
                     + "è il momento della Prova dell'Equinozio!");
             text.setWrapText(true);
-            Opponent guardian = controller.trialGuardian();
-            Label guardianText = new Label(guardian.name() + " (" + guardian.element() + ")\n"
-                    + guardian.description());
-            guardianText.setWrapText(true);
-            guardianText.setStyle("-fx-text-fill: #555;");
             Button trial = new Button("Affronta la Prova dell'Equinozio");
             trial.setMaxWidth(Double.MAX_VALUE);
             trial.setStyle("-fx-font-weight: bold;");
             trial.setOnAction(e -> onTrial.run());
-            panel.getChildren().addAll(title, text, messageLabel(),
-                    subtitle("Il tuo avversario"), guardianText, trial);
+            panel.getChildren().addAll(messageLabel(), text, trial);
             return panel;
         }
 
-        Label title = title("Settimana " + controller.week() + " di " + AcademicYear.TOTAL_WEEKS);
+        Label weekTitle = subtitle("Settimana " + controller.week() + " di " + AcademicYear.TOTAL_WEEKS);
         Label left = new Label(controller.weeksLeft() == 1
-                ? "Ultima settimana prima della Prova dell'Equinozio"
-                : "Mancano " + controller.weeksLeft() + " settimane alla Prova dell'Equinozio");
+                ? "Ultima settimana prima della Prova"
+                : "Mancano " + controller.weeksLeft() + " settimane alla Prova");
         left.setStyle("-fx-text-fill: #555;");
-        panel.getChildren().addAll(title, left, messageLabel(), subtitle("Attività della settimana"));
+        panel.getChildren().addAll(messageLabel(), weekTitle, left);
 
+        panel.getChildren().add(subtitle("Attività della settimana"));
         Student student = controller.student().orElseThrow();
         for (Activity activity : controller.activities()) {
             Button button = new Button(activity.name());
@@ -120,6 +117,27 @@ public class HomeView {
         challenge.setOnAction(e -> onChallenge.accept(opponentBox.getValue()));
         panel.getChildren().addAll(subtitle("Duello"), opponentBox, opponentDescription, challenge);
         return panel;
+    }
+
+    /** Il guardiano di quest'anno: conoscerlo in anticipo aiuta a prepararsi. */
+    private VBox guardianBox() {
+        Opponent guardian = controller.trialGuardian();
+        Label name = new Label("Prova dell'Equinozio: " + guardian.name() + " (" + guardian.element() + ")");
+        name.setWrapText(true);
+        name.setStyle("-fx-font-weight: bold;");
+        Label description = new Label(guardian.description());
+        description.setWrapText(true);
+        description.setStyle("-fx-text-fill: #555; -fx-font-size: 12px;");
+        VBox box = new VBox(4, name, description);
+        box.setPadding(new Insets(8));
+        box.setStyle("-fx-border-color: #d5d8dc; -fx-border-radius: 6; -fx-background-color: #fbfcfc;"
+                + " -fx-background-radius: 6;");
+        if (controller.failedTrials() > 0) {
+            Label failed = new Label("Prove fallite finora: " + controller.failedTrials());
+            failed.setStyle("-fx-text-fill: #c0392b; -fx-font-size: 12px;");
+            box.getChildren().add(failed);
+        }
+        return box;
     }
 
     /** L'esito dell'ultima attività, evidenziato. */

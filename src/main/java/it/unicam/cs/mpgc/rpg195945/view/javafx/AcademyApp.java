@@ -49,7 +49,16 @@ public class AcademyApp extends Application {
 
     private void showTrial() {
         controller.startTrial();
-        scene.setRoot(new DuelView(controller, this::showEnd).getRoot());
+        scene.setRoot(new DuelView(controller, this::afterTrial).getRoot());
+    }
+
+    /** Dopo la Prova: se era l'ultimo guardiano si è finito, altrimenti si continua. */
+    private void afterTrial() {
+        if (controller.isCompleted()) {
+            showEnd();
+        } else {
+            showHome();
+        }
     }
 
     private void showEnd() {

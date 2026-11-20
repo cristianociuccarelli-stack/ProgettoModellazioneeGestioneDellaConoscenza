@@ -9,9 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AcademicYearTest {
 
+    /** Un anno arrivato alla Prova: tutte le settimane passate. */
+    private static AcademicYear finishedYear(int year) {
+        return new AcademicYear(year, AcademicYear.TOTAL_WEEKS + 1);
+    }
+
     @Test
-    void startsInTheFirstWeek() {
+    void startsInTheFirstWeekOfTheFirstYear() {
         AcademicYear year = new AcademicYear();
+        assertEquals(1, year.year());
         assertEquals(1, year.week());
         assertEquals(AcademicYear.TOTAL_WEEKS, year.weeksLeft());
         assertFalse(year.isOver());
@@ -30,14 +36,46 @@ class AcademicYearTest {
 
     @Test
     void lastWeekIsNotOverYet() {
-        AcademicYear year = new AcademicYear(AcademicYear.TOTAL_WEEKS);
+        AcademicYear year = new AcademicYear(1, AcademicYear.TOTAL_WEEKS);
         assertFalse(year.isOver());
         assertEquals(1, year.weeksLeft());
     }
 
     @Test
-    void rejectsInvalidWeeks() {
-        assertThrows(IllegalArgumentException.class, () -> new AcademicYear(0));
-        assertThrows(IllegalArgumentException.class, () -> new AcademicYear(AcademicYear.TOTAL_WEEKS + 2));
+    void passingTheTrialStartsTheNextYear() {
+        AcademicYear year = finishedYear(2);
+        year.nextYear();
+        assertEquals(3, year.year());
+        assertEquals(1, year.week());
+    }
+
+    @Test
+    void failingTheTrialRepeatsTheSameYear() {
+        AcademicYear year = finishedYear(2);
+        year.repeatYear();
+        assertEquals(2, year.year());
+        assertEquals(1, year.week());
+    }
+
+    @Test
+    void cannotChangeYearBeforeTheTrial() {
+        AcademicYear year = new AcademicYear();
+        assertThrows(IllegalStateException.class, year::nextYear);
+        assertThrows(IllegalStateException.class, year::repeatYear);
+    }
+
+    @Test
+    void thereIsNoYearAfterTheLast() {
+        AcademicYear year = finishedYear(AcademicYear.LAST_YEAR);
+        assertTrue(year.isLastYear());
+        assertThrows(IllegalStateException.class, year::nextYear);
+    }
+
+    @Test
+    void rejectsInvalidYearsAndWeeks() {
+        assertThrows(IllegalArgumentException.class, () -> new AcademicYear(0, 1));
+        assertThrows(IllegalArgumentException.class, () -> new AcademicYear(AcademicYear.LAST_YEAR + 1, 1));
+        assertThrows(IllegalArgumentException.class, () -> new AcademicYear(1, 0));
+        assertThrows(IllegalArgumentException.class, () -> new AcademicYear(1, AcademicYear.TOTAL_WEEKS + 2));
     }
 }
