@@ -9,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.BorderPane;
@@ -55,12 +56,13 @@ public class DuelView {
         studentPanel = new CombatantPanel(duel.student());
         opponentPanel = new CombatantPanel(duel.opponent());
         Label versus = new Label("contro");
-        versus.setStyle("-fx-font-size: 18px; -fx-text-fill: #555;");
+        versus.getStyleClass().addAll("subtitle", "muted");
         HBox top = new HBox(40, studentPanel.root, versus, opponentPanel.root);
         top.setAlignment(Pos.CENTER);
         top.setPadding(new Insets(20));
         root.setTop(top);
 
+        log.setCellFactory(list -> new LogCell(duel.student().name()));
         log.getItems().add("Il duello contro " + duel.opponent().name() + " ha inizio!");
         BorderPane.setMargin(log, new Insets(0, 20, 0, 20));
         root.setCenter(log);
@@ -68,7 +70,8 @@ public class DuelView {
         FlowPane actions = new FlowPane(10, 10);
         actions.setAlignment(Pos.CENTER);
         for (Spell spell : duel.student().spells()) {
-            Button button = new Button(spell.name() + " (" + spell.manaCost() + " mana)");
+            Button button = ElementStyle.paint(new Button(ElementStyle.symbol(spell.element()) + " "
+                    + spell.name() + " (" + spell.manaCost() + " mana)"), spell.element());
             button.setOnAction(e -> castSpell(spell));
             spellButtons.add(button);
             actions.getChildren().add(button);
@@ -137,10 +140,53 @@ public class DuelView {
             text = "Vittoria!";
         }
         Label result = new Label(text);
-        result.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        result.getStyleClass().add("result");
         Button back = new Button("Continua");
+        back.getStyleClass().add("primary");
         back.setOnAction(e -> onClose.run());
         bottom.getChildren().addAll(result, back);
+    }
+
+    /**
+     * Una riga della cronaca, colorata in base a chi ha agito: verde lo
+     * studente, rosso l'avversario, oro i turni e la vittoria. I colpi
+     * super efficaci sono in grassetto.
+     */
+    private static class LogCell extends ListCell<String> {
+
+        private static final List<String> LOG_CLASSES =
+                List.of("log-turn", "log-student", "log-opponent", "log-strong", "log-win", "log-lose");
+
+        private final String studentName;
+
+        LogCell(String studentName) {
+            this.studentName = studentName;
+        }
+
+        @Override
+        protected void updateItem(String line, boolean empty) {
+            super.updateItem(line, empty);
+            getStyleClass().removeAll(LOG_CLASSES);
+            if (empty || line == null) {
+                setText(null);
+                return;
+            }
+            setText(line);
+            if (line.startsWith("—") || line.startsWith("Il duello")) {
+                getStyleClass().add("log-turn");
+            } else if (line.contains("Hai vinto")) {
+                getStyleClass().add("log-win");
+            } else if (line.startsWith("Sei stato sconfitto")) {
+                getStyleClass().add("log-lose");
+            } else if (line.startsWith(studentName)) {
+                getStyleClass().add("log-student");
+            } else {
+                getStyleClass().add("log-opponent");
+            }
+            if (line.contains("super efficace")) {
+                getStyleClass().add("log-strong");
+            }
+        }
     }
 
     /** Il riquadro di uno dei due sfidanti. */
@@ -159,13 +205,13 @@ public class DuelView {
         CombatantPanel(Combatant combatant) {
             this.combatant = combatant;
             Label name = new Label(combatant.name());
-            name.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-            Label element = new Label("Elemento: " + combatant.element());
-            element.setStyle("-fx-text-fill: #555;");
+            name.getStyleClass().add("heading");
+            Label element = ElementStyle.paint(new Label(ElementStyle.name(combatant.element())),
+                    combatant.element());
             healthBar.setPrefWidth(BAR_WIDTH);
-            healthBar.setStyle("-fx-accent: #c0392b;");
+            healthBar.getStyleClass().add("health-bar");
             manaBar.setPrefWidth(BAR_WIDTH);
-            manaBar.setStyle("-fx-accent: #2e86c1;");
+            manaBar.getStyleClass().add("mana-bar");
             root = new VBox(6, name, element, healthBar, healthText, manaBar, manaText, shieldText);
             root.setAlignment(Pos.CENTER);
         }

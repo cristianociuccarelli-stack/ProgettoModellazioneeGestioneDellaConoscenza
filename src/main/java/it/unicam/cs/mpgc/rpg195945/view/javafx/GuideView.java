@@ -46,7 +46,7 @@ public class GuideView {
         Button back = new Button("← Torna all'Accademia");
         back.setOnAction(e -> onBack.run());
         Label title = new Label("Guida dell'Accademia Arcana");
-        title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold;");
+        title.getStyleClass().add("title");
 
         VBox content = new VBox(10, back, title);
         content.setPadding(new Insets(24, 40, 40, 40));
@@ -69,7 +69,7 @@ public class GuideView {
     /** La ruota degli elementi, ricavata dalla regola usata nei duelli. */
     private void addElements(VBox content) {
         section(content, "La ruota degli elementi");
-        List<String> strong = new ArrayList<>();
+        List<Label> strong = new ArrayList<>();
         List<String> neutral = new ArrayList<>();
         Element[] elements = Element.values();
         for (int i = 0; i < elements.length; i++) {
@@ -78,16 +78,19 @@ public class GuideView {
                 Element target = elements[j];
                 double multiplier = controller.elementalMultiplier(attack, target);
                 if (multiplier > 1) {
-                    strong.add("• " + attack + " batte " + target + ": danni × " + number(multiplier)
+                    Label line = new Label(ElementStyle.name(attack) + " batte " + ElementStyle.name(target)
+                            + ": danni × " + number(multiplier)
                             + " (al contrario × " + number(controller.elementalMultiplier(target, attack)) + ")");
+                    strong.add(ElementStyle.paint(line, attack));
                 } else if (j > i && multiplier == 1 && controller.elementalMultiplier(target, attack) == 1) {
-                    neutral.add(attack + " e " + target);
+                    neutral.add(ElementStyle.name(attack) + " e " + ElementStyle.name(target));
                 }
             }
         }
-        text(content, String.join("\n", strong));
+        content.getChildren().addAll(strong);
         text(content, "Coppie senza vantaggio (danni × 1): " + String.join(", ", neutral)
-                + ". Anche due incantesimi dello stesso elemento sono neutri.");
+                + ". Anche due incantesimi dello stesso elemento sono neutri.\n"
+                + "I simboli sono quelli degli antichi alchimisti: ▲ Fuoco, ▼ Acqua, △ Aria, ▽ Terra.");
     }
 
     private void addDamage(VBox content) {
@@ -125,7 +128,7 @@ public class GuideView {
             Label description = new Label(affinity.description());
             description.setWrapText(true);
             description.setMaxWidth(480);
-            table.addRow(row++, new Label(affinity.title()), new Label(affinity.element().toString()), description);
+            table.addRow(row++, new Label(affinity.title()), elementLabel(affinity.element()), description);
         }
         content.getChildren().add(table);
     }
@@ -147,7 +150,7 @@ public class GuideView {
         GridPane opponents = table("Avversario", "Elemento", "Esperienza");
         int row = 1;
         for (Opponent opponent : controller.opponents()) {
-            opponents.addRow(row++, new Label(opponent.name()), new Label(opponent.element().toString()),
+            opponents.addRow(row++, new Label(opponent.name()), elementLabel(opponent.element()),
                     new Label("+" + opponent.experienceReward()));
         }
         content.getChildren().add(opponents);
@@ -157,7 +160,7 @@ public class GuideView {
         row = 1;
         for (Opponent guardian : controller.guardians()) {
             guardians.addRow(row, new Label(String.valueOf(row)), new Label(guardian.name()),
-                    new Label(guardian.element().toString()), new Label(String.valueOf(guardian.stats().health())),
+                    elementLabel(guardian.element()), new Label(String.valueOf(guardian.stats().health())),
                     new Label(String.valueOf(guardian.stats().power())),
                     new Label(String.valueOf(guardian.stats().speed())));
             row++;
@@ -167,7 +170,7 @@ public class GuideView {
 
     private static void section(VBox content, String title) {
         Label label = new Label(title);
-        label.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        label.getStyleClass().add("subtitle");
         label.setPadding(new Insets(14, 0, 0, 0));
         content.getChildren().add(label);
     }
@@ -186,10 +189,14 @@ public class GuideView {
         table.setVgap(4);
         for (int column = 0; column < headers.length; column++) {
             Label header = new Label(headers[column]);
-            header.setStyle("-fx-font-weight: bold;");
+            header.getStyleClass().addAll("strong", "muted");
             table.add(header, column, 0);
         }
         return table;
+    }
+
+    private static Label elementLabel(Element element) {
+        return ElementStyle.paint(new Label(ElementStyle.name(element)), element);
     }
 
     /** 1.5 diventa "1,5": i numeri scritti all'italiana. */

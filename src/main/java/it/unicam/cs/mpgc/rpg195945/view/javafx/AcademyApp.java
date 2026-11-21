@@ -28,6 +28,7 @@ public class AcademyApp extends Application {
     public void start(Stage primaryStage) {
         stage = primaryStage;
         scene = new Scene(new StackPane(), WIDTH, HEIGHT);
+        scene.getStylesheets().add(AcademyApp.class.getResource("academy.css").toExternalForm());
         showNewStudent();
         stage.setTitle(TITLE);
         stage.setScene(scene);

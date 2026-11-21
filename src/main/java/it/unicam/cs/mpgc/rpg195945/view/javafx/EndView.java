@@ -33,7 +33,7 @@ public class EndView {
         Student student = controller.student().orElseThrow();
 
         Label title = new Label("Ti sei diplomato all'Accademia Arcana!");
-        title.setStyle("-fx-font-size: 32px; -fx-font-weight: bold;");
+        title.getStyleClass().add("title");
         Label text = new Label("Hai sconfitto tutti e " + AcademicYear.LAST_YEAR
                 + " i guardiani delle Prove dell'Equinozio. Il tuo percorso è concluso.");
         text.setWrapText(true);
@@ -45,9 +45,10 @@ public class EndView {
                         : ". Prove fallite lungo il percorso: " + controller.failedTrials() + "."));
         summary.setWrapText(true);
         summary.setMaxWidth(560);
-        summary.setStyle("-fx-text-fill: #555;");
+        summary.getStyleClass().add("muted");
 
         Button newGame = new Button("Nuova partita");
+        newGame.getStyleClass().add("primary");
         newGame.setOnAction(e -> onNewGame.run());
         Button exit = new Button("Esci");
         exit.setOnAction(e -> onExit.run());

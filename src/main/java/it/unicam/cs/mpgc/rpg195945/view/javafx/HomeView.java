@@ -90,7 +90,7 @@ public class HomeView {
             text.setWrapText(true);
             Button trial = new Button("Affronta la Prova dell'Equinozio");
             trial.setMaxWidth(Double.MAX_VALUE);
-            trial.setStyle("-fx-font-weight: bold;");
+            trial.getStyleClass().add("primary");
             trial.setOnAction(e -> onTrial.run());
             panel.getChildren().addAll(messageLabel(), text, trial);
             return panel;
@@ -100,7 +100,7 @@ public class HomeView {
         Label left = new Label(controller.weeksLeft() == 1
                 ? "Ultima settimana prima della Prova"
                 : "Mancano " + controller.weeksLeft() + " settimane alla Prova");
-        left.setStyle("-fx-text-fill: #555;");
+        left.getStyleClass().add("muted");
         panel.getChildren().addAll(messageLabel(), weekTitle, left);
 
         panel.getChildren().add(subtitle("Attività della settimana"));
@@ -112,7 +112,7 @@ public class HomeView {
             button.setOnAction(e -> doActivity(activity));
             Label description = new Label(activity.description());
             description.setWrapText(true);
-            description.setStyle("-fx-text-fill: #555; -fx-font-size: 12px;");
+            description.getStyleClass().add("small");
             panel.getChildren().addAll(button, description);
         }
 
@@ -122,7 +122,7 @@ public class HomeView {
         opponentBox.setMaxWidth(Double.MAX_VALUE);
         Label opponentDescription = new Label(opponentBox.getValue().description());
         opponentDescription.setWrapText(true);
-        opponentDescription.setStyle("-fx-text-fill: #555; -fx-font-size: 12px;");
+        opponentDescription.getStyleClass().add("small");
         opponentBox.setOnAction(e -> opponentDescription.setText(opponentBox.getValue().description()));
         Button challenge = new Button("Sfida");
         challenge.setMaxWidth(Double.MAX_VALUE);
@@ -134,19 +134,20 @@ public class HomeView {
     /** Il guardiano di quest'anno: conoscerlo in anticipo aiuta a prepararsi. */
     private VBox guardianBox() {
         Opponent guardian = controller.trialGuardian();
-        Label name = new Label("Prova dell'Equinozio: " + guardian.name() + " (" + guardian.element() + ")");
+        Label heading = new Label("Prova dell'Equinozio");
+        heading.getStyleClass().add("small");
+        Label name = ElementStyle.paint(new Label(guardian.name() + "  ·  " + ElementStyle.name(guardian.element())),
+                guardian.element());
         name.setWrapText(true);
-        name.setStyle("-fx-font-weight: bold;");
+        name.getStyleClass().add("strong");
         Label description = new Label(guardian.description());
         description.setWrapText(true);
-        description.setStyle("-fx-text-fill: #555; -fx-font-size: 12px;");
-        VBox box = new VBox(4, name, description);
-        box.setPadding(new Insets(8));
-        box.setStyle("-fx-border-color: #d5d8dc; -fx-border-radius: 6; -fx-background-color: #fbfcfc;"
-                + " -fx-background-radius: 6;");
+        description.getStyleClass().add("small");
+        VBox box = new VBox(4, heading, name, description);
+        box.getStyleClass().add("card");
         if (controller.failedTrials() > 0) {
             Label failed = new Label("Prove fallite finora: " + controller.failedTrials());
-            failed.setStyle("-fx-text-fill: #c0392b; -fx-font-size: 12px;");
+            failed.getStyleClass().addAll("small", "error");
             box.getChildren().add(failed);
         }
         return box;
@@ -156,19 +157,19 @@ public class HomeView {
     private Label messageLabel() {
         Label message = new Label(lastMessage);
         message.setWrapText(true);
-        message.setStyle("-fx-text-fill: #1e8449; -fx-font-weight: bold;");
+        message.getStyleClass().add("success");
         return message;
     }
 
     private static Label title(String text) {
         Label label = new Label(text);
-        label.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
+        label.getStyleClass().add("heading");
         return label;
     }
 
     private static Label subtitle(String text) {
         Label label = new Label(text);
-        label.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        label.getStyleClass().add("subtitle");
         label.setPadding(new Insets(10, 0, 0, 0));
         return label;
     }

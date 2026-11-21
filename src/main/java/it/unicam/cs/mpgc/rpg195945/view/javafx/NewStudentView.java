@@ -47,7 +47,7 @@ public class NewStudentView {
         this.onCreated = Objects.requireNonNull(onCreated, "onCreated");
 
         Label title = new Label("Iscrizione all'Accademia");
-        title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold;");
+        title.getStyleClass().add("title");
 
         nameField.setPromptText("Il tuo nome");
         nameField.setMaxWidth(FIELD_WIDTH);
@@ -58,11 +58,12 @@ public class NewStudentView {
 
         description.setWrapText(true);
         description.setMaxWidth(TEXT_WIDTH);
-        statsPreview.setStyle("-fx-text-fill: #555;");
-        error.setStyle("-fx-text-fill: #c0392b;");
+        statsPreview.getStyleClass().add("muted");
+        error.getStyleClass().add("error");
 
         Button start = new Button("Inizia l'anno");
         start.setDefaultButton(true);
+        start.getStyleClass().add("primary");
         start.setOnAction(e -> createStudent());
 
         root = new VBox(10, title,

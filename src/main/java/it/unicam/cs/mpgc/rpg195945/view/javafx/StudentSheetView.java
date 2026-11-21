@@ -28,12 +28,13 @@ public class StudentSheetView {
         Objects.requireNonNull(student, "student");
 
         Label name = new Label(student.name());
-        name.setStyle("-fx-font-size: 28px; -fx-font-weight: bold;");
-        Label affinity = new Label(student.affinity().toString());
-        affinity.setStyle("-fx-font-size: 16px; -fx-text-fill: #555;");
+        name.getStyleClass().add("title");
+        Label affinity = ElementStyle.paint(new Label(student.affinity().title() + "  ·  "
+                + ElementStyle.name(student.affinity().element())), student.affinity().element());
+        affinity.setStyle("-fx-font-size: 16px;");
 
         Label level = new Label("Livello " + student.level());
-        level.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        level.getStyleClass().add("subtitle");
         ProgressBar experienceBar = new ProgressBar(
                 (double) student.experience() / student.experienceForNextLevel());
         experienceBar.setPrefWidth(300);
@@ -41,13 +42,14 @@ public class StudentSheetView {
                 + student.experienceForNextLevel() + " esperienza");
 
         Label spellsTitle = new Label("Incantesimi");
-        spellsTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        spellsTitle.getStyleClass().add("subtitle");
         spellsTitle.setPadding(new Insets(16, 0, 0, 0));
         VBox spells = new VBox(4);
         spells.setAlignment(Pos.CENTER);
         for (Spell spell : student.spells()) {
-            spells.getChildren().add(new Label(spell.name() + "  ·  " + spell.effect()
-                    + " " + spell.power() + "  ·  " + spell.manaCost() + " mana"));
+            Label line = new Label(ElementStyle.symbol(spell.element()) + " " + spell.name() + "  ·  "
+                    + spell.effect() + " " + spell.power() + "  ·  " + spell.manaCost() + " mana");
+            spells.getChildren().add(ElementStyle.paint(line, spell.element()));
         }
 
         VBox content = new VBox(10, name, affinity, level, experienceBar, experience,
@@ -79,7 +81,7 @@ public class StudentSheetView {
 
     private static void addRow(GridPane table, int row, String label, int value) {
         Label valueLabel = new Label(String.valueOf(value));
-        valueLabel.setStyle("-fx-font-weight: bold;");
+        valueLabel.getStyleClass().add("strong");
         table.addRow(row, new Label(label), valueLabel);
     }
 }
