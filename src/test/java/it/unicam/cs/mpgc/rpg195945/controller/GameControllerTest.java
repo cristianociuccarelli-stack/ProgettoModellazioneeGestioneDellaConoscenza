@@ -250,4 +250,19 @@ class GameControllerTest {
         assertEquals(0, controller.failedTrials());
         assertFalse(controller.isCompleted());
     }
+
+    @Test
+    void explainsTheElementalRule() {
+        GameController controller = new GameController();
+        assertEquals(ElementWheel.STRONG, controller.elementalMultiplier(Element.WATER, Element.FIRE));
+        assertEquals(ElementWheel.WEAK, controller.elementalMultiplier(Element.FIRE, Element.WATER));
+    }
+
+    @Test
+    void listsTheGuardiansOfAllTheYears() {
+        GameController controller = new GameController();
+        controller.createStudent("Lira", Affinity.FIRE);
+        assertEquals(AcademicYear.LAST_YEAR, controller.guardians().size());
+        assertEquals("Guardiano della Soglia", controller.guardians().get(0).name());
+    }
 }

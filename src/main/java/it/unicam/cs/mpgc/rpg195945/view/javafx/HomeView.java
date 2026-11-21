@@ -11,6 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
@@ -31,6 +32,7 @@ public class HomeView {
     private final GameController controller;
     private final Consumer<Opponent> onChallenge;
     private final Runnable onTrial;
+    private final Runnable onGuide;
     private final BorderPane root = new BorderPane();
     private String lastMessage = "";
 
@@ -38,11 +40,14 @@ public class HomeView {
      * @param controller  il controller, con lo studente già creato
      * @param onChallenge azione da eseguire quando si sfida un avversario
      * @param onTrial     azione da eseguire quando si affronta la Prova dell'Equinozio
+     * @param onGuide     azione per aprire la guida del gioco
      */
-    public HomeView(GameController controller, Consumer<Opponent> onChallenge, Runnable onTrial) {
+    public HomeView(GameController controller, Consumer<Opponent> onChallenge, Runnable onTrial,
+                    Runnable onGuide) {
         this.controller = Objects.requireNonNull(controller, "controller");
         this.onChallenge = Objects.requireNonNull(onChallenge, "onChallenge");
         this.onTrial = Objects.requireNonNull(onTrial, "onTrial");
+        this.onGuide = Objects.requireNonNull(onGuide, "onGuide");
         refresh();
     }
 
@@ -54,7 +59,11 @@ public class HomeView {
     private void refresh() {
         Student student = controller.student().orElseThrow();
         root.setCenter(new StudentSheetView(student).getRoot());
-        root.setRight(weekPanel());
+        ScrollPane weekScroll = new ScrollPane(weekPanel());
+        weekScroll.setFitToWidth(true);
+        weekScroll.setPrefWidth(PANEL_WIDTH + 20);
+        weekScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        root.setRight(weekScroll);
     }
 
     /** Chiamato quando si preme il pulsante di un'attività. */
@@ -65,12 +74,15 @@ public class HomeView {
 
     private VBox weekPanel() {
         VBox panel = new VBox(10);
-        panel.setPadding(new Insets(40, 30, 40, 10));
+        panel.setPadding(new Insets(30, 30, 30, 10));
         panel.setPrefWidth(PANEL_WIDTH);
         panel.setAlignment(Pos.TOP_CENTER);
 
         Label yearTitle = title("Anno " + controller.year() + " di " + AcademicYear.LAST_YEAR);
-        panel.getChildren().addAll(yearTitle, guardianBox());
+        Button guide = new Button("Guida: come funziona il gioco");
+        guide.setMaxWidth(Double.MAX_VALUE);
+        guide.setOnAction(e -> onGuide.run());
+        panel.getChildren().addAll(yearTitle, guide, guardianBox());
 
         if (controller.isYearOver()) {
             Label text = new Label("Le settimane di scuola sono finite: "

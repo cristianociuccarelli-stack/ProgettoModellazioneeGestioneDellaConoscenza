@@ -10,11 +10,13 @@ import it.unicam.cs.mpgc.rpg195945.engine.duel.ElementWheel;
 import it.unicam.cs.mpgc.rpg195945.engine.duel.ElementalRule;
 import it.unicam.cs.mpgc.rpg195945.engine.trial.EquinoxTrial;
 import it.unicam.cs.mpgc.rpg195945.model.calendar.AcademicYear;
+import it.unicam.cs.mpgc.rpg195945.model.magic.Element;
 import it.unicam.cs.mpgc.rpg195945.model.opponent.Opponent;
 import it.unicam.cs.mpgc.rpg195945.model.student.Affinity;
 import it.unicam.cs.mpgc.rpg195945.model.student.Stats;
 import it.unicam.cs.mpgc.rpg195945.model.student.Student;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -226,6 +228,26 @@ public class GameController {
     /** @return quante Prove dell'Equinozio lo studente ha fallito */
     public int failedTrials() {
         return failedTrials;
+    }
+
+    /**
+     * Quanto un elemento è efficace contro un altro, secondo la regola usata
+     * nei duelli. Serve alla guida per spiegare la ruota degli elementi.
+     */
+    public double elementalMultiplier(Element attack, Element target) {
+        return elementalRule.multiplier(attack, target);
+    }
+
+    /**
+     * @return i guardiani di tutti gli anni, in ordine
+     */
+    public List<Opponent> guardians() {
+        Student current = student().orElseThrow(() -> new IllegalStateException("Prima devi creare lo studente"));
+        List<Opponent> guardians = new ArrayList<>();
+        for (int number = 1; number <= AcademicYear.LAST_YEAR; number++) {
+            guardians.add(EquinoxTrial.guardianOfYear(number, current, elementalRule));
+        }
+        return guardians;
     }
 
     /** Applica l'esito della Prova: anno successivo, diploma o anno da ripetere. */

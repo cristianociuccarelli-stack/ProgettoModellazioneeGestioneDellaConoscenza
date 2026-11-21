@@ -39,7 +39,11 @@ public class AcademyApp extends Application {
     }
 
     private void showHome() {
-        scene.setRoot(new HomeView(controller, this::showDuel, this::showTrial).getRoot());
+        scene.setRoot(new HomeView(controller, this::showDuel, this::showTrial, this::showGuide).getRoot());
+    }
+
+    private void showGuide() {
+        scene.setRoot(new GuideView(controller, this::showHome).getRoot());
     }
 
     private void showDuel(Opponent opponent) {
