@@ -99,6 +99,16 @@ public final class Student {
         return spellbook.canCast(spell);
     }
 
+    /** @return gli elementi che lo studente sa usare, nell'ordine in cui li ha imparati */
+    public List<Element> knownElements() {
+        return spellbook.elements();
+    }
+
+    /** @return le rune che lo studente conosce, nell'ordine in cui le ha imparate */
+    public List<Rune> knownRunes() {
+        return spellbook.runes();
+    }
+
     public boolean knows(Rune rune) {
         return spellbook.knows(rune);
     }

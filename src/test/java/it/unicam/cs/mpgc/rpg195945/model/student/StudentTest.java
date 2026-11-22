@@ -80,4 +80,13 @@ class StudentTest {
         assertTrue(student.knows(Rune.BOLT));
         assertFalse(student.knows(Rune.LANCE));
     }
+
+    @Test
+    void listsWhatItKnowsInTheOrderItLearnedIt() {
+        Student student = new Student("Lira", Affinity.EARTH);
+        student.learn(Element.FIRE);
+        student.learn(Rune.SPRING);
+        assertEquals(List.of(Element.EARTH, Element.FIRE), student.knownElements());
+        assertEquals(List.of(Rune.BOLT, Rune.WARD, Rune.SPRING), student.knownRunes());
+    }
 }
