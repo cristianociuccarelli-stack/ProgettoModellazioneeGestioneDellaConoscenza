@@ -12,9 +12,15 @@ import it.unicam.cs.mpgc.rpg195945.engine.trial.EquinoxTrial;
 import it.unicam.cs.mpgc.rpg195945.model.calendar.AcademicYear;
 import it.unicam.cs.mpgc.rpg195945.model.magic.Element;
 import it.unicam.cs.mpgc.rpg195945.model.opponent.Opponent;
+import it.unicam.cs.mpgc.rpg195945.model.magic.Spellbook;
 import it.unicam.cs.mpgc.rpg195945.model.student.Affinity;
+import it.unicam.cs.mpgc.rpg195945.model.student.Progression;
 import it.unicam.cs.mpgc.rpg195945.model.student.Stats;
 import it.unicam.cs.mpgc.rpg195945.model.student.Student;
+import it.unicam.cs.mpgc.rpg195945.persistence.GameRepository;
+import it.unicam.cs.mpgc.rpg195945.persistence.InMemoryGameRepository;
+import it.unicam.cs.mpgc.rpg195945.persistence.PersistenceException;
+import it.unicam.cs.mpgc.rpg195945.persistence.SavedGame;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +33,15 @@ import java.util.Optional;
  * La grafica non crea né modifica direttamente gli oggetti del modello: chiede
  * tutto a questo controller. Così, se domani cambiassimo grafica (per esempio
  * una versione da terminale), basterebbe riusare questa classe.
+ * <p>
+ * Il controller salva la partita da solo dopo ogni settimana, usando il
+ * {@link GameRepository} che riceve nel costruttore: non sa se si salva su
+ * file, in un database o in memoria.
  */
 public class GameController {
 
     private final ElementalRule elementalRule;
+    private final GameRepository repository;
     private final List<Activity> activities = List.of(new Training(), new RuneLesson(), new ElementLesson());
     private Student student;
     private AcademicYear year;
@@ -40,16 +51,27 @@ public class GameController {
     private boolean completed;
     private int failedTrials;
 
-    /** Controller con le regole standard del gioco. */
+    /** Controller con le regole standard e un salvataggio solo in memoria. */
     public GameController() {
         this(ElementWheel.standard());
     }
 
     /**
+     * Controller con un salvataggio solo in memoria (utile nei test).
+     *
      * @param elementalRule la regola del vantaggio elementale da usare nei duelli
      */
     public GameController(ElementalRule elementalRule) {
+        this(elementalRule, new InMemoryGameRepository());
+    }
+
+    /**
+     * @param elementalRule la regola del vantaggio elementale da usare nei duelli
+     * @param repository    dove salvare e caricare la partita
+     */
+    public GameController(ElementalRule elementalRule, GameRepository repository) {
         this.elementalRule = Objects.requireNonNull(elementalRule, "elementalRule");
+        this.repository = Objects.requireNonNull(repository, "repository");
     }
 
     /**
@@ -83,6 +105,7 @@ public class GameController {
         inTrial = false;
         completed = false;
         failedTrials = 0;
+        save();
         return student;
     }
 
@@ -144,6 +167,7 @@ public class GameController {
         }
         duel = null;
         opponent = null;
+        save();
         return reward;
     }
 
@@ -170,6 +194,7 @@ public class GameController {
         }
         String message = activity.perform(student);
         year.advance();
+        save();
         return message;
     }
 
@@ -248,6 +273,64 @@ public class GameController {
             guardians.add(EquinoxTrial.guardianOfYear(number, current, elementalRule));
         }
         return guardians;
+    }
+
+    /**
+     * @return {@code true} se c'è una partita salvata da continuare
+     */
+    public boolean hasSavedGame() {
+        try {
+            return repository.load().isPresent();
+        } catch (PersistenceException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Riprende la partita salvata dal punto in cui era stata lasciata.
+     *
+     * @return lo studente della partita ripresa
+     * @throws IllegalStateException se non c'è nessuna partita salvata
+     * @throws PersistenceException  se il salvataggio non si riesce a leggere
+     */
+    public Student continueGame() {
+        SavedGame saved = repository.load()
+                .orElseThrow(() -> new IllegalStateException("Non c'è nessuna partita salvata"));
+        Affinity affinity = affinityOf(saved.affinityElement());
+        student = new Student(saved.studentName(), affinity,
+                new Progression(saved.level(), saved.experience()),
+                new Spellbook(saved.elements(), saved.runes()));
+        year = new AcademicYear(saved.year(), saved.week());
+        duel = null;
+        opponent = null;
+        inTrial = false;
+        completed = false;
+        failedTrials = saved.failedTrials();
+        return student;
+    }
+
+    /**
+     * Salva la "fotografia" della partita. Quando il percorso è concluso il
+     * salvataggio non serve più e viene cancellato.
+     */
+    private void save() {
+        if (completed) {
+            repository.delete();
+            return;
+        }
+        repository.save(new SavedGame(student.name(), student.affinity().element(),
+                student.level(), student.experience(), student.knownElements(), student.knownRunes(),
+                year.year(), year.week(), failedTrials));
+    }
+
+    /** Ritrova l'affinità a partire dal suo elemento: ogni affinità ha un elemento diverso. */
+    private static Affinity affinityOf(Element element) {
+        for (Affinity affinity : Affinity.all()) {
+            if (affinity.element() == element) {
+                return affinity;
+            }
+        }
+        throw new PersistenceException("Nessuna affinità per l'elemento " + element, null);
     }
 
     /** Applica l'esito della Prova: anno successivo, diploma o anno da ripetere. */

@@ -24,7 +24,7 @@ public class EndView {
     /**
      * @param controller il controller, con il percorso concluso
      * @param onNewGame  azione per iniziare una nuova partita
-     * @param onExit     azione per uscire dal gioco
+     * @param onExit     azione per tornare al menu principale
      */
     public EndView(GameController controller, Runnable onNewGame, Runnable onExit) {
         Objects.requireNonNull(controller, "controller");
@@ -50,7 +50,7 @@ public class EndView {
         Button newGame = new Button("Nuova partita");
         newGame.getStyleClass().add("primary");
         newGame.setOnAction(e -> onNewGame.run());
-        Button exit = new Button("Esci");
+        Button exit = new Button("Menu principale");
         exit.setOnAction(e -> onExit.run());
         HBox buttons = new HBox(12, newGame, exit);
         buttons.setAlignment(Pos.CENTER);

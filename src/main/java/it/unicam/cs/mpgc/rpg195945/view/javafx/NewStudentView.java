@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.util.Objects;
@@ -31,6 +32,7 @@ public class NewStudentView {
 
     private final GameController controller;
     private final Consumer<Student> onCreated;
+    private final Runnable onCancel;
     private final VBox root;
     private final TextField nameField = new TextField();
     private final ComboBox<Affinity> affinityBox = new ComboBox<>();
@@ -41,10 +43,12 @@ public class NewStudentView {
     /**
      * @param controller il controller del gioco
      * @param onCreated  azione da eseguire con lo studente appena creato
+     * @param onCancel   azione per tornare al menu senza creare lo studente
      */
-    public NewStudentView(GameController controller, Consumer<Student> onCreated) {
+    public NewStudentView(GameController controller, Consumer<Student> onCreated, Runnable onCancel) {
         this.controller = Objects.requireNonNull(controller, "controller");
         this.onCreated = Objects.requireNonNull(onCreated, "onCreated");
+        this.onCancel = Objects.requireNonNull(onCancel, "onCancel");
 
         Label title = new Label("Iscrizione all'Accademia");
         title.getStyleClass().add("title");
@@ -70,7 +74,7 @@ public class NewStudentView {
                 new Label("Nome"), nameField,
                 new Label("Affinità elementale"), affinityBox,
                 description, statsPreview,
-                start, error);
+                buttons(start), error);
         root.setAlignment(Pos.CENTER);
         root.setPadding(new Insets(40));
         showSelectedAffinity();
@@ -78,6 +82,15 @@ public class NewStudentView {
 
     public Parent getRoot() {
         return root;
+    }
+
+    /** "Annulla" accanto al pulsante per iniziare. */
+    private HBox buttons(Button start) {
+        Button cancel = new Button("Annulla");
+        cancel.setOnAction(e -> onCancel.run());
+        HBox buttons = new HBox(12, cancel, start);
+        buttons.setAlignment(Pos.CENTER);
+        return buttons;
     }
 
     /** Chiamato quando si preme "Inizia l'anno". */

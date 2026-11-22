@@ -12,6 +12,7 @@ import it.unicam.cs.mpgc.rpg195945.model.opponent.Opponent;
 import it.unicam.cs.mpgc.rpg195945.model.student.Affinity;
 import it.unicam.cs.mpgc.rpg195945.model.student.Stats;
 import it.unicam.cs.mpgc.rpg195945.model.student.Student;
+import it.unicam.cs.mpgc.rpg195945.persistence.InMemoryGameRepository;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -264,5 +265,58 @@ class GameControllerTest {
         controller.createStudent("Lira", Affinity.FIRE);
         assertEquals(AcademicYear.LAST_YEAR, controller.guardians().size());
         assertEquals("Guardiano della Soglia", controller.guardians().get(0).name());
+    }
+
+    @Test
+    void thereIsNoSavedGameAtTheBeginning() {
+        GameController controller = new GameController();
+        assertFalse(controller.hasSavedGame());
+        assertThrows(IllegalStateException.class, controller::continueGame);
+    }
+
+    @Test
+    void theGameIsSavedEveryWeekAndCanBeContinued() {
+        InMemoryGameRepository repository = new InMemoryGameRepository();
+        GameController first = new GameController(ElementWheel.standard(), repository);
+        first.createStudent("Lira", Affinity.WATER);
+        first.doActivity(new RuneLesson());
+        first.doActivity(new Training());
+
+        // un controller nuovo con lo stesso salvataggio: come riaprire il gioco
+        GameController second = new GameController(ElementWheel.standard(), repository);
+        assertTrue(second.hasSavedGame());
+        Student student = second.continueGame();
+        assertEquals("Lira", student.name());
+        assertEquals(Affinity.WATER, student.affinity());
+        assertEquals(Training.EXPERIENCE, student.experience());
+        assertTrue(student.knows(Rune.LANCE));
+        assertEquals(3, second.week());
+    }
+
+    @Test
+    void aFailedTrialIsRememberedAfterContinuing() {
+        InMemoryGameRepository repository = new InMemoryGameRepository();
+        GameController first = new GameController(ElementWheel.standard(), repository);
+        first.createStudent("Lira", Affinity.WATER);
+        trainUntilTheTrial(first);
+        playTrial(first, false);
+
+        GameController second = new GameController(ElementWheel.standard(), repository);
+        second.continueGame();
+        assertEquals(1, second.failedTrials());
+        assertEquals(1, second.year());
+    }
+
+    @Test
+    void theSaveIsDeletedWhenTheGameIsCompleted() {
+        InMemoryGameRepository repository = new InMemoryGameRepository();
+        GameController controller = new GameController(WATER_IS_DEVASTATING, repository);
+        controller.createStudent("Lira", Affinity.WATER);
+        for (int year = 1; year <= AcademicYear.LAST_YEAR; year++) {
+            trainUntilTheTrial(controller);
+            playTrial(controller, true);
+        }
+        assertTrue(controller.isCompleted());
+        assertFalse(controller.hasSavedGame());
     }
 }

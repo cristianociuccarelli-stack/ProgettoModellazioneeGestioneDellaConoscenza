@@ -1,7 +1,9 @@
 package it.unicam.cs.mpgc.rpg195945.view.javafx;
 
 import it.unicam.cs.mpgc.rpg195945.controller.GameController;
+import it.unicam.cs.mpgc.rpg195945.engine.duel.ElementWheel;
 import it.unicam.cs.mpgc.rpg195945.model.opponent.Opponent;
+import it.unicam.cs.mpgc.rpg195945.persistence.FileGameRepository;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
@@ -10,6 +12,10 @@ import javafx.stage.Stage;
 /**
  * Applicazione JavaFX: crea la finestra, il controller e decide quale
  * schermata mostrare.
+ * <p>
+ * È l'unico punto in cui si scelgono le implementazioni concrete (la ruota
+ * degli elementi, il salvataggio su file): il resto del gioco dipende solo
+ * dalle interfacce.
  * <p>
  * La finestra ha una sola {@link Scene}: per cambiare schermata se ne
  * sostituisce il contenuto con {@code scene.setRoot(...)}.
@@ -20,7 +26,8 @@ public class AcademyApp extends Application {
     private static final double WIDTH = 1000;
     private static final double HEIGHT = 700;
 
-    private final GameController controller = new GameController();
+    private final GameController controller =
+            new GameController(ElementWheel.standard(), FileGameRepository.inUserHome());
     private Stage stage;
     private Scene scene;
 
@@ -29,14 +36,24 @@ public class AcademyApp extends Application {
         stage = primaryStage;
         scene = new Scene(new StackPane(), WIDTH, HEIGHT);
         scene.getStylesheets().add(AcademyApp.class.getResource("academy.css").toExternalForm());
-        showNewStudent();
+        showMenu();
         stage.setTitle(TITLE);
         stage.setScene(scene);
         stage.show();
     }
 
+    private void showMenu() {
+        scene.setRoot(new MainMenuView(controller.hasSavedGame(),
+                this::showNewStudent, this::continueGame, stage::close).getRoot());
+    }
+
     private void showNewStudent() {
-        scene.setRoot(new NewStudentView(controller, student -> showHome()).getRoot());
+        scene.setRoot(new NewStudentView(controller, student -> showHome(), this::showMenu).getRoot());
+    }
+
+    private void continueGame() {
+        controller.continueGame();
+        showHome();
     }
 
     private void showHome() {
@@ -67,6 +84,6 @@ public class AcademyApp extends Application {
     }
 
     private void showEnd() {
-        scene.setRoot(new EndView(controller, this::showNewStudent, stage::close).getRoot());
+        scene.setRoot(new EndView(controller, this::showNewStudent, this::showMenu).getRoot());
     }
 }
